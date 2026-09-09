@@ -34,7 +34,7 @@ function autenticarToken(req, res, next) {
 
   if (!authorization) {
     return res.status(401).json({
-      erro: "Token não informado",
+      erro: "Entre na sua conta para adicionar ao carrinho.",
     });
   }
 
