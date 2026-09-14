@@ -3,7 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const app = express();
-const path = require("path")
+const path = require("path");
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -11,7 +12,7 @@ app.use(cors());
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
-)
+);
 
 const authRoutes = require("./routes/auth");
 
@@ -38,7 +39,7 @@ function autenticarToken(req, res, next) {
     });
   }
 
-  console.log(req.headers.authorization)
+  console.log(req.headers.authorization);
 
   const token = authorization.replace("Bearer ", "");
 
@@ -95,6 +96,37 @@ app.use("/pagamentos", autenticarToken, pagamentosRoutes);
 
 app.use("/fretes", autenticarToken, fretesRoutes);
 
+app.get("/melhor-envio/callback", (req, res) => {
+  const { code, error, error_description } = req.query;
+
+  if (error) {
+    console.error(
+      "Erro na autorização do Melhor Envio:",
+      error
+    );
+
+    return res.status(400).json({
+      erro: error_description || error,
+    });
+  }
+
+  if (!code) {
+    return res.status(400).json({
+      erro: "Código de autorização não recebido.",
+    });
+  }
+
+  console.log(
+    "Código de autorização recebido do Melhor Envio:",
+    code
+  );
+
+  res.json({
+    mensagem: "Autorização do Melhor Envio recebida com sucesso.",
+    code,
+  });
+});
+
 app.get("/", (req, res) => {
   res.json({
     projeto: "Loja Ecommerce Online",
@@ -128,5 +160,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta ${PORT}`)
-})
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
