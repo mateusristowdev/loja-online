@@ -7,83 +7,82 @@ datasource db {
 }
 
 model Categorias {
-  id       Int       @id @default(autoincrement())
+  id       Int        @id @default(autoincrement())
   nome     String
   produtos Produtos[]
 }
 
 model Produtos {
- id             Int        @id @default(autoincrement())
-  nome           String
-  clube          String
-  pais           String
-  liga           String
-  continente     String
-  temporada      String
-  tipo           String
-  marca          String
-  cor            String
-  descricao      String
-  preco          Float
-  precoOriginal  Float
-  imagem         String
-  estoque        Int
-  destaque       Boolean    @default(false)
-  novo           Boolean    @default(false)
-  peso           Float?
-  altura         Float?
-  largura        Float?
-  comprimento    Float?
-  categorias     Categorias @relation(fields: [categoriasId], references: [id])
-  categoriasId   Int
-  favoritos      Favoritos[]
-  carrinho       Carrinho[]
-  itensPedidos   itensPedidos[]
+  id            Int            @id @default(autoincrement())
+  nome          String
+  clube         String
+  pais          String
+  liga          String
+  continente    String
+  temporada     String
+  tipo          String
+  marca         String
+  cor           String
+  descricao     String
+  preco         Float
+  precoOriginal Float
+  imagem        String
+  estoque       Int
+  destaque      Boolean        @default(false)
+  novo          Boolean        @default(false)
+  categoriasId  Int
+  altura        Float?
+  comprimento   Float?
+  largura       Float?
+  peso          Float?
+  carrinho      Carrinho[]
+  favoritos     Favoritos[]
+  categorias    Categorias     @relation(fields: [categoriasId], references: [id])
+  itensPedidos  itensPedidos[]
 }
 
 model Informacoes {
-    id         Int      @id @default(autoincrement())
-    nome       String 
-    horario    DateTime
-    status     Boolean  @default(true)
+  id      Int      @id @default(autoincrement())
+  nome    String
+  horario DateTime
+  status  Boolean  @default(true)
 }
 
 model Usuarios {
-  id         Int          @id @default(autoincrement())
-  nome       String
-  email      String       @unique
-  senha      String
-  telefone   String
-  cpf        String?      @unique
-  is_admin      Boolean   @default(false)
-  pedidos    Pedidos[]
-  favoritos  Favoritos[]
-  enderecos  Enderecos[]
-  carrinho   Carrinho[]
+  id        Int         @id @default(autoincrement())
+  nome      String
+  email     String      @unique
+  senha     String
+  telefone  String
+  is_admin  Boolean     @default(false)
+  cpf       String?     @unique
+  carrinho  Carrinho[]
+  enderecos Enderecos[]
+  favoritos Favoritos[]
+  pedidos   Pedidos[]
 }
 
 model Pedidos {
-  id            Int            @id @default(autoincrement())
-  usuarios      Usuarios       @relation(fields: [usuariosId], references: [id])
-  usuariosId    Int
-  total         Float
-  status        String
-  data          DateTime       @default(now())
-  itensPedidos  itensPedidos[]
-  pagamentos    Pagamentos?
-  fretes        Fretes?
+  id           Int            @id @default(autoincrement())
+  usuariosId   Int
+  total        Float
+  status       String
+  data         DateTime       @default(now())
+  fretes       Fretes?
+  pagamentos   Pagamentos?
+  usuarios     Usuarios       @relation(fields: [usuariosId], references: [id])
+  itensPedidos itensPedidos[]
 }
 
 model Cupons {
-  id         Int      @id @default(autoincrement())
-  codigo     String   @unique
-  desconto   Float
-  ativo      Boolean  @default(true)
+  id       Int     @id @default(autoincrement())
+  codigo   String  @unique
+  desconto Float
+  ativo    Boolean @default(true)
 }
 
 model Enderecos {
-  id          Int         @id @default(autoincrement())
-  usuarios    Usuarios    @relation(fields: [usuariosId], references: [id])
+  id          Int      @id @default(autoincrement())
   usuariosId  Int
   cep         Int
   rua         String
@@ -92,54 +91,55 @@ model Enderecos {
   bairro      String
   cidade      String
   estado      String
+  usuarios    Usuarios @relation(fields: [usuariosId], references: [id])
 }
 
 model Favoritos {
-  id          Int       @id @default(autoincrement())
-  usuarios    Usuarios  @relation(fields: [usuariosId], references: [id])
-  usuariosId  Int
-  produtos    Produtos  @relation(fields: [produtosId], references: [id])
-  produtosId  Int
+  id         Int      @id @default(autoincrement())
+  usuariosId Int
+  produtosId Int
+  produtos   Produtos @relation(fields: [produtosId], references: [id])
+  usuarios   Usuarios @relation(fields: [usuariosId], references: [id])
 }
 
 model Carrinho {
-  id          Int       @id @default(autoincrement())
-  usuarios    Usuarios  @relation(fields: [usuariosId], references: [id])
-  usuariosId  Int
-  produtos    Produtos  @relation(fields: [produtosId], references: [id])
-  produtosId  Int
-  quantidade  Int       @default(1)
+  id         Int      @id @default(autoincrement())
+  usuariosId Int
+  produtosId Int
+  quantidade Int      @default(1)
+  produtos   Produtos @relation(fields: [produtosId], references: [id])
+  usuarios   Usuarios @relation(fields: [usuariosId], references: [id])
 
   @@unique([usuariosId, produtosId])
 }
 
 model itensPedidos {
-  id          Int       @id @default(autoincrement())
-  pedidos     Pedidos   @relation(fields: [pedidosId], references: [id])
-  pedidosId   Int
-  produtos    Produtos  @relation(fields: [produtosId], references: [id])
-  produtosId  Int
-  quantidade  Int
-  preco       Float
+  id         Int      @id @default(autoincrement())
+  pedidosId  Int
+  produtosId Int
+  quantidade Int
+  preco      Float
+  produtos   Produtos @relation(fields: [produtosId], references: [id])
+  pedidos    Pedidos  @relation(fields: [pedidosId], references: [id])
 }
 
 model Pagamentos {
-  id          Int       @id @default(autoincrement())
-  pedidoId    Int
-  pedidos     Pedidos   @relation(fields: [pedidosId], references: [id])
-  pedidosId   Int       @unique
-  metodo      String
-  status      String
-  valor       Float
-  datasPagamentos      DateTime  @default(now())
+  id              Int      @id @default(autoincrement())
+  pedidoId        Int
+  pedidosId       Int      @unique
+  metodo          String
+  status          String
+  valor           Float
+  datasPagamentos DateTime @default(now())
+  pedidos         Pedidos  @relation(fields: [pedidosId], references: [id])
 }
 
 model Fretes {
-  id          Int       @id @default(autoincrement())
-  pedidos     Pedidos   @relation(fields: [pedidosId], references: [id])
-  pedidosId   Int       @unique
-  tipo        String
-  valor       Float
-  prazoDias   Int
-  status      String
+  id        Int     @id @default(autoincrement())
+  pedidosId Int     @unique
+  tipo      String
+  valor     Float
+  prazoDias Int
+  status    String
+  pedidos   Pedidos @relation(fields: [pedidosId], references: [id])
 }
