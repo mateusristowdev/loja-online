@@ -30,6 +30,10 @@ model Produtos {
   estoque        Int
   destaque       Boolean    @default(false)
   novo           Boolean    @default(false)
+  peso           Float?
+  altura         Float?
+  largura        Float?
+  comprimento    Float?
   categorias     Categorias @relation(fields: [categoriasId], references: [id])
   categoriasId   Int
   favoritos      Favoritos[]
