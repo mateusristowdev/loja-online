@@ -2,6 +2,13 @@ const express = require("express");
 const router = express.Router();
 const prisma = require("../lib/prisma");
 
+console.log(
+  "MELHOR_ENVIO_ACCESS_TOKEN:",
+  process.env.MELHOR_ENVIO_ACCESS_TOKEN
+    ? "CONFIGURADO"
+    : "NAO CONFIGURADO"
+);
+
 const CEP_ORIGEM = "96020360";
 
 const MELHOR_ENVIO_BASE_URL =
