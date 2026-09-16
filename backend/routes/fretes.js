@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const prisma = require("../lib/prisma");
 
-const CEP_ORIGEM = "15500000";
+const CEP_ORIGEM = "96020360";
 
 const MELHOR_ENVIO_BASE_URL =
   process.env.MELHOR_ENVIO_ENV === "production"
