@@ -9,41 +9,20 @@ const MELHOR_ENVIO_BASE_URL =
     ? "https://melhorenvio.com.br"
     : "https://sandbox.melhorenvio.com.br";
 
-async function obterTokenMelhorEnvio() {
-  const response = await fetch(
-    `${MELHOR_ENVIO_BASE_URL}/oauth/token`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "User-Agent":
-          "MANTO 017 (suporte@seuemail.com)",
-      },
-      body: JSON.stringify({
-        grant_type: "client_credentials",
-        client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
-        client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
-      }),
-    }
-  );
+const USER_AGENT =
+  process.env.MELHOR_ENVIO_USER_AGENT ||
+  "MANTO 017 (suporte@manto017.com)";
 
-  const data = await response.json();
+function obterTokenMelhorEnvio() {
+  const token = process.env.MELHOR_ENVIO_ACCESS_TOKEN;
 
-  if (!response.ok) {
-    console.error(
-      "Erro ao obter token do Melhor Envio:",
-      data
-    );
-
+  if (!token) {
     throw new Error(
-      data.message ||
-      data.error ||
-      "Não foi possível autenticar no Melhor Envio."
+      "MELHOR_ENVIO_ACCESS_TOKEN não configurado no ambiente."
     );
   }
 
-  return data.access_token;
+  return token;
 }
 
 router.post("/calcular", async (req, res, next) => {
@@ -59,17 +38,17 @@ router.post("/calcular", async (req, res, next) => {
       });
     }
 
-    if (!produtos || !Array.isArray(produtos) || produtos.length === 0) {
-      return res.status(400).json({
-        erro: "Nenhum produto informado para calcular o frete."
-      });
-    }
-
     const cepDestinoLimpo = String(cepDestino).replace(/\D/g, "");
 
     if (cepDestinoLimpo.length !== 8) {
       return res.status(400).json({
         erro: "CEP de destino inválido."
+      });
+    }
+
+    if (!Array.isArray(produtos) || produtos.length === 0) {
+      return res.status(400).json({
+        erro: "Nenhum produto informado para calcular o frete."
       });
     }
 
@@ -82,14 +61,21 @@ router.post("/calcular", async (req, res, next) => {
       const quantidade = Number(produto.quantidade || 1);
 
       if (
-        !peso ||
-        !altura ||
-        !largura ||
-        !comprimento ||
-        valor < 0
+        !Number.isFinite(peso) ||
+        peso <= 0 ||
+        !Number.isFinite(altura) ||
+        altura <= 0 ||
+        !Number.isFinite(largura) ||
+        largura <= 0 ||
+        !Number.isFinite(comprimento) ||
+        comprimento <= 0 ||
+        !Number.isFinite(valor) ||
+        valor < 0 ||
+        !Number.isFinite(quantidade) ||
+        quantidade <= 0
       ) {
         throw new Error(
-          `Dados de dimensões/peso inválidos no produto ${index + 1}.`
+          `Dados de peso, dimensões ou valor inválidos no produto ${index + 1}.`
         );
       }
 
@@ -99,16 +85,17 @@ router.post("/calcular", async (req, res, next) => {
           produto.nome ||
           `produto-${index + 1}`
         ),
+
         width: largura,
         height: altura,
         length: comprimento,
         weight: peso,
-        insurance_value: valor,
+        insurance_value: Number(valor.toFixed(2)),
         quantity: quantidade
       };
     });
 
-    const token = await obterTokenMelhorEnvio();
+    const token = obterTokenMelhorEnvio();
 
     const response = await fetch(
       `${MELHOR_ENVIO_BASE_URL}/api/v2/me/shipment/calculate`,
@@ -119,8 +106,7 @@ router.post("/calcular", async (req, res, next) => {
           "Content-Type": "application/json",
           "Accept": "application/json",
           "Authorization": `Bearer ${token}`,
-          "User-Agent":
-            "MANTO 017 (suporte@seuemail.com)"
+          "User-Agent": USER_AGENT
         },
 
         body: JSON.stringify({
@@ -157,7 +143,7 @@ router.post("/calcular", async (req, res, next) => {
       });
     }
 
-    res.json({
+    return res.json({
       origem: CEP_ORIGEM,
       destino: cepDestinoLimpo,
       fretes: data
@@ -178,6 +164,7 @@ router.get("/", async (req, res, next) => {
     const fretes = await prisma.fretes.findMany();
 
     res.json(fretes);
+
   } catch (err) {
     next(err);
   }
@@ -257,6 +244,5 @@ router.delete("/:id", async (req, res, next) => {
     next(err);
   }
 });
-
 
 module.exports = router;
