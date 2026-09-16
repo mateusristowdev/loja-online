@@ -6,7 +6,7 @@ const crypto = require("crypto")
 const prisma = require("../lib/prisma")
 
 const storage = multer.diskStorage({
-  destination: function (req, res, cb) {
+  destination: function (req, file, cb) {
     cb(null, "uploads/")
   },
 
@@ -21,9 +21,17 @@ const storage = multer.diskStorage({
   }
 })
 
-const upload = multer({ storage: storage })
+const upload = multer({ storage })
 
-router.get("/", async (req, res, next) => {
+function converterBooleano(valor) {
+  if (typeof valor === "boolean") {
+    return valor
+  }
+
+  return valor === "true"
+}
+
+const routerGetProdutos = async (req, res, next) => {
   try {
     console.log("=================================")
     console.log("GET /produtos")
@@ -49,7 +57,9 @@ router.get("/", async (req, res, next) => {
 
     next(err)
   }
-})
+}
+
+router.get("/", routerGetProdutos)
 
 router.get("/destaques", async (req, res, next) => {
   try {
@@ -95,6 +105,7 @@ router.get("/:id", async (req, res, next) => {
 
 router.post("/", upload.single("imagem"), async (req, res, next) => {
   try {
+
     const {
       nome,
       clube,
@@ -111,11 +122,17 @@ router.post("/", upload.single("imagem"), async (req, res, next) => {
       estoque,
       destaque,
       novo,
-      categoriasId
-    } = req.body;
+      categoriasId,
+      peso,
+      altura,
+      largura,
+      comprimento
 
+    } = req.body
 
-    const imagem = req.file.filename;
+    const imagem = req.file
+      ? req.file.filename
+      : ""
 
     if (
       !nome ||
@@ -131,7 +148,11 @@ router.post("/", upload.single("imagem"), async (req, res, next) => {
       preco === undefined ||
       precoOriginal === undefined ||
       estoque === undefined ||
-      !categoriasId
+      !categoriasId ||
+      peso === undefined ||
+      altura === undefined ||
+      largura === undefined ||
+      comprimento === undefined
     ) {
       const err = new Error(
         "Todos os campos obrigatórios devem ser preenchidos"
@@ -155,6 +176,7 @@ router.post("/", upload.single("imagem"), async (req, res, next) => {
 
     const novoProduto = await prisma.produtos.create({
       data: {
+
         nome,
         clube,
         pais,
@@ -165,13 +187,25 @@ router.post("/", upload.single("imagem"), async (req, res, next) => {
         marca,
         cor,
         descricao,
+
         preco: Number(preco),
+
         precoOriginal: Number(precoOriginal),
-        imagem: imagem || "",
+
+        imagem,
+
         estoque: Number(estoque),
-        destaque: Boolean(destaque),
-        novo: Boolean(novo),
-        categoriasId: Number(categoriasId)
+
+        destaque: converterBooleano(destaque),
+
+        novo: converterBooleano(novo),
+
+        categoriasId: Number(categoriasId),
+
+        peso: Number(peso),
+        altura: Number(altura),
+        largura: Number(largura),
+        comprimento: Number(comprimento)
       }
     })
 
@@ -187,10 +221,13 @@ router.post("/", upload.single("imagem"), async (req, res, next) => {
 
 router.put("/:id", upload.single("imagem"), async (req, res, next) => {
   try {
+
     const id = Number(req.params.id)
 
     const produto = await prisma.produtos.findUnique({
-      where: { id }
+      where: {
+        id
+      }
     })
 
     if (!produto) {
@@ -215,63 +252,135 @@ router.put("/:id", upload.single("imagem"), async (req, res, next) => {
       estoque,
       destaque,
       novo,
-      categoriasId
+      categoriasId,
+      peso,
+      altura,
+      largura,
+      comprimento
+
     } = req.body
 
-    const produtoAtualizado = await prisma.produtos.update({
-      where: { id },
-      data: {
-        ...(nome !== undefined && { nome }),
-        ...(clube !== undefined && { clube }),
-        ...(pais !== undefined && { pais }),
-        ...(liga !== undefined && { liga }),
-        ...(continente !== undefined && { continente }),
-        ...(temporada !== undefined && { temporada }),
-        ...(tipo !== undefined && { tipo }),
-        ...(marca !== undefined && { marca }),
-        ...(cor !== undefined && { cor }),
-        ...(descricao !== undefined && { descricao }),
+    const produtoAtualizado =
+      await prisma.produtos.update({
 
-        ...(preco !== undefined && {
-          preco: Number(preco)
-        }),
+        where: {
+          id
+        },
 
-        ...(precoOriginal !== undefined && {
-          precoOriginal: Number(precoOriginal)
-        }),
+        data: {
 
-        ...(req.file && {
-          imagem: req.file.filename
-        }),
+          ...(nome !== undefined && {
+            nome
+          }),
 
-        ...(estoque !== undefined && {
-          estoque: Number(estoque)
-        }),
+          ...(clube !== undefined && {
+            clube
+          }),
 
-        ...(destaque !== undefined && {
-          destaque: destaque === "true"
-        }),
+          ...(pais !== undefined && {
+            pais
+          }),
 
-        ...(novo !== undefined && {
-          novo: novo === "true"
-        }),
+          ...(liga !== undefined && {
+            liga
+          }),
 
-        ...(categoriasId !== undefined && {
-          categoriasId: Number(categoriasId)
-        })
-      }
-    })
+          ...(continente !== undefined && {
+            continente
+          }),
+
+          ...(temporada !== undefined && {
+            temporada
+          }),
+
+          ...(tipo !== undefined && {
+            tipo
+          }),
+
+          ...(marca !== undefined && {
+            marca
+          }),
+
+          ...(cor !== undefined && {
+            cor
+          }),
+
+          ...(descricao !== undefined && {
+            descricao
+          }),
+
+          ...(preco !== undefined && preco !== "" && {
+            preco: Number(preco)
+          }),
+
+          ...(precoOriginal !== undefined &&
+            precoOriginal !== "" && {
+              precoOriginal: Number(precoOriginal)
+            }),
+
+          ...(req.file && {
+            imagem: req.file.filename
+          }),
+
+          ...(estoque !== undefined && estoque !== "" && {
+            estoque: Number(estoque)
+          }),
+
+          ...(destaque !== undefined && {
+            destaque: converterBooleano(destaque)
+          }),
+
+          ...(novo !== undefined && {
+            novo: converterBooleano(novo)
+          }),
+
+          ...(categoriasId !== undefined &&
+            categoriasId !== "" && {
+              categoriasId: Number(categoriasId)
+            }),
+
+          ...(peso !== undefined &&
+            peso !== "" && {
+              peso: Number(peso)
+            }),
+
+          ...(altura !== undefined &&
+            altura !== "" && {
+              altura: Number(altura)
+            }),
+
+          ...(largura !== undefined &&
+            largura !== "" && {
+              largura: Number(largura)
+            }),
+
+          ...(comprimento !== undefined &&
+            comprimento !== "" && {
+              comprimento: Number(comprimento)
+            })
+        }
+      })
+
+    console.log("Produto atualizado:")
+    console.log(produtoAtualizado)
 
     res.json(produtoAtualizado)
 
   } catch (err) {
+
+    console.error(
+      "ERRO AO ATUALIZAR PRODUTO:"
+    )
+
+    console.error(err)
+
     next(err)
   }
 })
 
-
 router.delete("/:id", async (req, res, next) => {
   try {
+
     const id = Number(req.params.id)
 
     const produto = await prisma.produtos.findUnique({
